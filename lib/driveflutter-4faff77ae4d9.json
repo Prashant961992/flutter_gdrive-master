@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "driveflutter",
+  "private_key_id": "4faff77ae4d9ca0f22c8141b2ecd4614911d3c77",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCi3LOK/qy0ruf2\n0CMX+16xgmOm+i3Lynd+m3Cb4xDoOofbCAYJB+0nS8OQmzWCkoe1UfcP1lBa6OCG\nplBWFjJtGTza9sZogzzgUym1w1J1ISg9IGtawxpy/JsTAmnzHycDW6wRQMJezCWV\n5u/hLlPv/ToVpDdJy9yNV+j5SrW1LeSAGvL+9RMVHQuOZ5tO+eVj0wikRXM45MeA\nMIJYD5jsqWEIw6Uj75utE0H1XE/k8D/vCT9qEMphwyi3Is7nYzZEV+xztJOK0DbK\nLPPKPml84AzBht8hv451K6PFIccZWL5WbTA7dEZHA0xbYfdWW3YCwn61lp45N27H\n3q/viGuXAgMBAAECggEAJYKsrbJbp9/zGFM3CgKA/GR6PE659oqi/BukE5t4XOyC\nNu4BqdnUAu191RQSfojuTdJbk5+6cT3a3Nh4f2NsaNlbvVkCOLclcctlu3IJz2V8\nJZwObeCq+ln5A6dWLMN7klfuaSjfu8LMU1rV3Cj19zv9QVfJzirwmPNq+uP8twZF\nVRQdn3FF8t1Heb3OTW175kre8PtWNkNUtqYq7/4guKTtWmKiiUIBrvfrzyxgbLDw\njMF5HqM7QG1NzjRY3PlymqP4m4lirbUBLpT1le7Jl8LHwhuTK/824vOOCR/opr75\nYGka86jAGyk+w+PunfJfc7ZYc3mLofiRg2glIq6CaQKBgQDSgTlkSacADVZzBbf1\nBKguE6D69g2uOZLkADV+D8jhF5qBNUefcriLRK2FLIQgIrXTab2zhSW9tKCL9kgI\nPzyXeU6NlIznUifJtVjGgDGfzMrbE3rj1Mob4fZTHDBsWjPw6d8KcYNraIYmdL9X\naAXhYRNHYavyjySerQn1qTSPuQKBgQDGD4LVXKHf6UCxOiHHqcxSUBbUNvXND18i\newWUy1LbkgnykeR+/Z5MrMk+lb3LoHR9gKxUbNy0ESnMoXnxWQUBLO+WY7i1n7yR\nWTValRC9MjNfrULRBMEYNdZDlLPCnUxeHDeHFTSA0F9RJWrK+iFJZXjXFXh+x6gP\nQU9jiWJdzwKBgQCDC92NuGhVmPgLjTDTQP3uCVw7P7iOkNsIQ7UJcIwuzQHrlB6t\nfb6zPKMFeAwc8V7eaUKmoqo3Kl6UI1L+h1eSOPuVGjiJvVR1twa4NJAwGk7jCYKE\nmTDlIMu3O6JNoe4Z+Y5XswkMcbqp8B46LNEUWNmmo4Bm9YPnoHPF0nudSQKBgQC7\nUF4fJZ1eY34wXtcluvum+WGt0FDFX/1MYebUYzr4t/Q6eioMxBWbVGp7iyjV1Ol2\n7GOO8OoGTpkmk6z9SYCHLRVmOOeuteSj3ieshIAxPrIBkZ44ifOIzxnWDmO38gYQ\nl0UYt0BRd0A+QVHvp4IlpRcU65Rq6q6RxuWrMHpcVwKBgGY0PDLV13lejkl2g9ds\nhrROjqg+NJoPDv1MsoO8dLQQbhbkWO225G/N6iEL3OMObBSGawHCQMLUiW0/Q51v\niKi7oSOniWOIA1cucYOXf54uyJi+VDbg4NIxW2oSCtpsPqqm1UUck+V0tVJ0CDTN\n5MlcI4lBu55WmlUGjGiIaD6i\n-----END PRIVATE KEY-----\n",
+  "client_email": "driveflutter@driveflutter.iam.gserviceaccount.com",
+  "client_id": "100664493901739658541",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/driveflutter%40driveflutter.iam.gserviceaccount.com"
+}
