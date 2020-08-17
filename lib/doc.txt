@@ -1,0 +1,5 @@
+https://tanaikech.github.io/2020/03/05/simple-script-of-resumable-upload-with-google-drive-api-for-python/
+
+https://developers.google.com/drive/api/v3/appdata
+
+https://stackoverflow.com/questions/39887303/resumable-upload-in-drive-rest-api-v3

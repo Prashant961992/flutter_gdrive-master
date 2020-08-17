@@ -1,15 +1,22 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:googleapis/drive/v3.dart' as ga;
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import 'package:path/path.dart' as path;
 import 'package:http/io_client.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+
+import 'database/sqllite_database_provider.dart';
+// import 'package:path/path.dart';
 
 void main() => runApp(MyApp());
 
@@ -26,14 +33,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//https://stackoverflow.com/questions/58072743/how-to-access-google-drive-appdata-folder-file-with-flutter
 class GoogleHttpClient extends IOClient {
   Map<String, String> _headers;
 
   GoogleHttpClient(this._headers) : super();
 
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) =>
-      super.send(request..headers.addAll(_headers));
+  // @override
+  // Future<http.StreamedResponse> send(http.BaseRequest request) =>
+  //     super.send(request..headers.addAll(_headers));
 
   @override
   Future<http.Response> head(Object url, {Map<String, String> headers}) =>
@@ -56,6 +64,18 @@ class _MyHomePageState extends State<MyHomePage> {
   ga.FileList list;
   var signedIn = false;
 
+  @override
+  void initState() {
+    super.initState();
+    final fido = Dog(
+      id: 0,
+      name: 'Fido',
+      age: 35,
+    );
+
+    SQLiteDBProvider.instance.insertDog(fido);
+  }
+
   Future<void> _loginWithGoogle() async {
     signedIn = await storage.read(key: "signedIn") == "true" ? true : false;
     googleSignIn.onCurrentUserChanged
@@ -66,7 +86,17 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     if (signedIn) {
       try {
-        googleSignIn.signInSilently().whenComplete(() => () {});
+        try {
+          final account = await googleSignIn.signInSilently();
+          print("Successfully signed in as ${account.displayName}.");
+        } on PlatformException catch (e) {
+          // User not signed in yet. Do something appropriate.
+          print(e);
+          print("The user is not signed in yet. Asking to sign in.");
+          final GoogleSignInAccount googleSignInAccount =
+              await googleSignIn.signIn();
+          _afterGoogleLogin(googleSignInAccount);
+        }
       } catch (e) {
         storage.write(key: "signedIn", value: "false").then((value) {
           setState(() {
@@ -77,7 +107,9 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       final GoogleSignInAccount googleSignInAccount =
           await googleSignIn.signIn();
-      _afterGoogleLogin(googleSignInAccount);
+      if (googleSignInAccount != null) {
+        _afterGoogleLogin(googleSignInAccount);
+      }
     }
   }
 
@@ -119,56 +151,108 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     });
   }
-
+//https://tanaikech.github.io/2020/03/05/simple-script-of-resumable-upload-with-google-drive-api-for-python/
   _uploadFileToGoogleDrive() async {
+    var strings = await SQLiteDBProvider.instance.getDBPath();
+    var file = File(strings);
+
     var client = GoogleHttpClient(await googleSignInAccount.authHeaders);
-    var drive = ga.DriveApi(client);
-    ga.File fileToUpload = ga.File();
-    var file = await FilePicker.getFile();
-    fileToUpload.parents = ["appDataFolder"];
-    fileToUpload.name = path.basename(file.absolute.path);
-    var response = await drive.files.create(
-      fileToUpload,
-      uploadMedia: ga.Media(file.openRead(), file.lengthSync()),
-    );
-    print(response);
-    _listGoogleDriveFiles();
+    // var drive = ga.DriveApi(client);
+    final headers = {
+      'Authorization': client._headers["Authorization"],
+      // 'X-Upload-Content-Type':'application/octet-stream',
+      // 'X-Upload-Content-Length': filelengthInt.toString(),
+      'Content-Type': 'application/json; charset=UTF-8',
+      // 'Content-Length': fileData.length.toString()
+    };
+    final initialQueryParameters = {'uploadType': 'resumable'};
+    final Map<String, dynamic> metaData = {
+      'name': path.basename(file.absolute.path),
+      'parents': ['appDataFolder']
+    };
+    final initiateUri = Uri.https(
+        'www.googleapis.com', '/upload/drive/v3/files', initialQueryParameters);
+    post(initiateUri, headers: headers, body: json.encode(metaData))
+        .then((value) {
+      _uploadDataToserver(value.headers["location"], headers);
+      print(value.statusCode);
+    }).catchError((error) {
+      print(error);
+    });
+  }
+
+  Future<void> _uploadDataToserver(String location,Map<String, String> headers) async {
+    var strings = await SQLiteDBProvider.instance.getDBPath();
+    print(strings);
+    var file = File(strings);
+    var filelengthInt = await file.length();
+    // print(filelengthInt);
+    var fileByteData = await file
+        .readAsBytes(); //,'X-Upload-Content-Type': fileData.toString()
+    print(fileByteData.length.toString());
+    // var body = file.openRead();
+    // print(body);
+    // var responseJson;
+    var lengthminusOne = filelengthInt - 1;
+    headers['Content-Range'] = "bytes 0-" + lengthminusOne.toString() + "/" + filelengthInt.toString();
+    try {
+      final http.Response response = await http.put(
+        location,
+        headers: headers,
+        body: fileByteData,
+      );
+      print(response);
+      // responseJson = response;
+    } on SocketException {
+      throw FetchDataException('No Internet connection');
+    }
   }
 
   Future<void> _listGoogleDriveFiles() async {
     var client = GoogleHttpClient(await googleSignInAccount.authHeaders);
     var drive = ga.DriveApi(client);
+    // var data = drive.drives.list();
+    // print(data);
     drive.files.list(spaces: 'appDataFolder').then((value) {
       setState(() {
         list = value;
       });
       for (var i = 0; i < list.files.length; i++) {
+        // drive.files.delete(list.files[i].id);
         print("Id: ${list.files[i].id} File Name:${list.files[i].name}");
       }
+    }).catchError((error) {
+      print(error);
     });
   }
 
   Future<void> _downloadGoogleDriveFile(String fName, String gdID) async {
     var client = GoogleHttpClient(await googleSignInAccount.authHeaders);
     var drive = ga.DriveApi(client);
-    ga.Media file = await drive.files
-        .get(gdID, downloadOptions: ga.DownloadOptions.FullMedia);
-    print(file.stream);
 
-    final directory = await getExternalStorageDirectory();
-    print(directory.path);
-    final saveFile = File('${directory.path}/${new DateTime.now().millisecondsSinceEpoch}$fName');
-    List<int> dataStore = [];
-    file.stream.listen((data) {
-      print("DataReceived: ${data.length}");
-      dataStore.insertAll(dataStore.length, data);
-    }, onDone: () {
-      print("Task Done");
-      saveFile.writeAsBytes(dataStore);
-      print("File saved at ${saveFile.path}");
-    }, onError: (error) {
-      print("Some Error");
+    await drive.files.get(gdID).then((value) {
+      print(value);
     });
+
+    // ga.Media file = await drive.files
+    //     .get(gdID, downloadOptions: ga.DownloadOptions.Metadata);
+    // print(file.stream);
+
+    // final directory = await getExternalStorageDirectory();
+    // print(directory.path);
+    // final saveFile = File(
+    //     '${directory.path}/${new DateTime.now().millisecondsSinceEpoch}$fName');
+    // List<int> dataStore = [];
+    // file.stream.listen((data) {
+    //   print("DataReceived: ${data.length}");
+    //   dataStore.insertAll(dataStore.length, data);
+    // }, onDone: () {
+    //   print("Task Done");
+    //   saveFile.writeAsBytes(dataStore);
+    //   print("File saved at ${saveFile.path}");
+    // }, onError: (error) {
+    //   print("Some Error");
+    // });
   }
 
   List<Widget> generateFilesWidget() {
@@ -195,7 +279,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 color: Colors.indigo,
                 onPressed: () {
-                  _downloadGoogleDriveFile(list.files[i].name, list.files[i].id);
+                  _downloadGoogleDriveFile(
+                      list.files[i].name, list.files[i].id);
                 },
               ),
             ),
@@ -254,4 +339,53 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+class Dog {
+  final int id;
+  final String name;
+  final int age;
+
+  Dog({this.id, this.name, this.age});
+
+  // Convert a Dog into a Map. The keys must correspond to the names of the
+  // columns in the database.
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'age': age,
+    };
+  }
+}
+
+
+
+
+class CustomException implements Exception {
+  final _message;
+  final _prefix;
+
+  CustomException([this._message, this._prefix]);
+
+  String toString() {
+    return "$_prefix$_message";
+  }
+}
+
+class FetchDataException extends CustomException {
+  FetchDataException([String message])
+      : super(message, "Error During Communication: ");
+}
+
+class BadRequestException extends CustomException {
+  BadRequestException([message]) : super(message, "Invalid Request: ");
+}
+
+class UnauthorisedException extends CustomException {
+  UnauthorisedException([message]) : super(message, "Unauthorised: ");
+}
+
+class InvalidInputException extends CustomException {
+  InvalidInputException([String message]) : super(message, "Invalid Input: ");
 }
